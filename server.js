@@ -211,6 +211,23 @@ app.get('/even', (req, res) => {
     });
 
 })
+app.get('/photos', (req, res) => {
+    db.select('*').from('photos').then(data => {
+        res.send(data);
+    });
+})
+
+app.get('/dvds', (req, res) => {
+    db.select('*').from('dvds').then(data => {
+        res.send(data);
+    });
+})
+app.get('/cds', (req, res) => {
+    db.select('*').from('cds').then(data => {
+        res.send(data);
+    });
+})
+
 app.get('/pictures', (req, res) => {
     db.select('*').from('pictures').then(data => {
         res.send(data);
