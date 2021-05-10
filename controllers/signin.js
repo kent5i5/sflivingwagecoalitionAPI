@@ -1,10 +1,13 @@
 const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv')
+dotenv.config();
 const maxAge = 45 * 60;
+
 const createToken = (id) => {
     const payload = {
         user: id
     }
-    return jwt.sign(payload, 'SECRET_SF', { expiresIn: maxAge, })
+    return jwt.sign(payload, process.env.JWT_TOKEN, { expiresIn: maxAge, })
 }
 
 const handleSignin = (db, bcrypt) => (req, res) => {

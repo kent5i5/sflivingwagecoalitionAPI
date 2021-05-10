@@ -530,6 +530,51 @@ app.get('/dashboard', authorization, async (req, res) => {
 //     }
 // });
 
+app.post('/insertLog/', authorization, async (req, res) => {
+    const { username, event, category } = req.body;
+    const pstTime =new Date().toLocaleString("en-US", {timeZone: "America/Los_Angeles"});
+
+    console.log('pstTime,', pstTime);
+
+    db.insert(
+        {
+            username: username,
+            event: event,
+            createDate: pstTime,
+            Category: category
+
+        })
+        .into('eventlog')
+        .then(date=> {
+            res.status(200).json({msg: "Log event inserted!"})
+        })
+        .catch(err => res.status(400).json({err: 'Unable to add log event!'}))
+} );
+
+app.get('/getLog/:username', authorization, async (req, res) => {
+    
+    const username = req.params.username;
+
+    const eventsInLog = await db.select('*').from('eventlog').where({username: username});
+
+    if(eventsInLog.length == 0){
+        return res.status(400).json({err: 'The username is not exist'});
+    }
+
+    res.status(200).json({eventsInLog});
+})
+
+app.get('/getusername/', authorization, async (req, res) => {
+    try {
+        console.log(req.user);
+        const user = await db.select('email').from('users').where({ id: req.user })
+        res.json(user[0])
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json('Server Error')
+    }
+})
+
 app.post('/create-checkout-session', async (req, res) => {
 
     const session = await stripe.checkout.sessions.create({
