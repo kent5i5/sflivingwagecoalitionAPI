@@ -566,9 +566,9 @@ app.get('/getLog/:username', authorization, async (req, res) => {
 
 app.get('/getusername/', authorization, async (req, res) => {
     try {
-        console.log(req.user);
+        console.log("getting username,", req.user);
         const user = await db.select('email').from('users').where({ id: req.user })
-        res.json(user[0])
+        res.status(200).json(user[0])
     } catch (error) {
         console.error(error.message);
         res.status(500).json('Server Error')
