@@ -28,8 +28,19 @@ const deleteAssistance = async (req, res, db) => {
     }
 }
 
+const deleteCd = async (req, res, db) => {
+    try{
+        const {cd_id} = req.params;
+        const deleteCd = await db('cds').where({id: cd_id}).del();
+        res.status(200).send({data: "delete"})
+    }catch(error){
+        console.error(error.message);
+    }
+}
+
 module.exports = {
     deleteEvent,
     deleteArt,
-    deleteAssistance
+    deleteAssistance,
+    deleteCd
 }

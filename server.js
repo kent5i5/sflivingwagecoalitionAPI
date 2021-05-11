@@ -23,6 +23,7 @@ const register = require('./controllers/register');
 const signin = require('./controllers/signin');
 const deleteArt = require('./routes/delete');
 const deleteAssistance = require('./routes/delete');
+const deleteCd = require('./routes/delete');
 dotenv.config();
 
 //const mdb = require('knex-mariadb');
@@ -186,6 +187,10 @@ app.delete('/deleteart/:art_id', (req, res) => {
 
 app.delete('/deleteassistance/:assis_id', (req, res) => {
     deleteAssistance.deleteAssistance(req, res, db)
+})
+
+app.delete('/deletecd/:cd_id', (req, res) => {
+    deleteCd.deleteCd(req, res, db);
 })
 
 app.put('/updateEvent/:event_id', (req, res) => {
