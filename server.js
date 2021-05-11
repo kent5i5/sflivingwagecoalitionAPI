@@ -564,6 +564,19 @@ app.get('/getLog/:username', authorization, async (req, res) => {
     res.status(200).json({eventsInLog});
 })
 
+
+app.get('/getAllLog', authorization, async (req, res) => {
+    
+    const allLogs = await db.select('*').from('eventlog');
+
+    if(allLogs){
+        return res.status(200).json({allLogs});
+    }else{
+        return res.status(400).json({err: 'Some errors happen when getting all infor in log'});
+    }
+
+})
+
 app.get('/getusername/', authorization, async (req, res) => {
     try {
         console.log("getting username,", req.user);
