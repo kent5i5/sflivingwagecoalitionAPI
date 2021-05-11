@@ -16,24 +16,32 @@ const jwt = require('jsonwebtoken');
 const validinfo = require('./middleware/validinfo');
 const authorization = require('./middleware/authorization');
 
-const addabout = require('./routes/post');
+const addEvent = require('./routes/post');
+const assistance = require('./routes/post');
 const updateEvents = require('./routes/update');
 const deleteEvents = require('./routes/delete');
 const register = require('./controllers/register');
 const signin = require('./controllers/signin');
 const deleteArt = require('./routes/delete');
 const deleteAssistance = require('./routes/delete');
+
+// This is a sample test API key. Sign in to see examples pre-filled with your key.
+const stripe = require("stripe")("sk_test_4eC39HqLyjWDarjtT1zdp7dc");
+
 dotenv.config();
 
 //const mdb = require('knex-mariadb');
 const db = knex({
     client: 'mysql',
     connection: {
-        host: process.env.HOSTNAME,
-        user: process.env.USERNAME,
-        password: process.env.PASSWORD,
-        database: process.env.DATABASE
-
+        // host: process.env.HOSTNAME,
+        // user: process.env.USERNAME,
+        // password: process.env.PASSWORD,
+        // database: process.env.DATABASE
+        host: "127.0.0.1" ,
+        user: "ken",
+        password: "kit123",
+        database: "phoneapp"
     }
 });
 
@@ -92,6 +100,14 @@ app.post('/addart', upload.single('photo'), (req, res) => {
             res.status(200).json({ insterted: " DATA Inserted!" })
         })
         .catch(err => res.status(400).json('Unable to add new art work'))
+})
+
+app.post('/addEvent', (req, res) => {
+    addEvent.addEvent(req,res, db);
+})
+
+app.post('/assistance', (req, res) => {
+    assistance.assistance(req,res, db);
 })
 
 app.put('/updateCloseDate', async (req, res) => {
@@ -530,49 +546,25 @@ app.get('/dashboard', authorization, async (req, res) => {
 //     }
 // });
 
-app.post('/create-checkout-session', async (req, res) => {
-
-    const session = await stripe.checkout.sessions.create({
+const calculateOrderAmount = items => {
+    // Replace this constant with a calculation of the order's amount
+    // Calculate the order total on the server to prevent
+    // people from directly manipulating the amount on the client
+    return 1;
+  };
   
-      payment_method_types: ['card'],
-  
-      line_items: [
-  
-        {
-  
-          price_data: {
-  
-            currency: 'usd',
-  
-            product_data: {
-  
-              name: 'Stubborn Attachments',
-  
-              images: ['https://i.imgur.com/EHyR2nP.png'],
-  
-            },
-  
-            unit_amount: 2000,
-  
-          },
-  
-          quantity: 1,
-  
-        },
-  
-      ],
-  
-      mode: 'payment',
-  
-      success_url: `${YOUR_DOMAIN}?success=true`,
-  
-      cancel_url: `${YOUR_DOMAIN}?canceled=true`,
-  
+app.post("/create-payment-intent", async (req, res) => {
+    const { items } = req.body;
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: calculateOrderAmount(items),
+      currency: "usd"
     });
   
-    res.json({ id: session.id });
-  
-});
+    res.send({
+      clientSecret: paymentIntent.client_secret
+    });
+  });
 
 app.listen(3001, () => {
     console.log('app is running at port 3001');
