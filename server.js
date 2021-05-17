@@ -24,6 +24,10 @@ const signin = require('./controllers/signin');
 const deleteArt = require('./routes/delete');
 const deleteAssistance = require('./routes/delete');
 const deleteCd = require('./routes/delete');
+const deleteDvd = require('./routes/delete');
+const deletePhoto = require('./routes/delete');
+const deletePicture = require("./routes/delete");
+
 dotenv.config();
 
 //const mdb = require('knex-mariadb');
@@ -230,6 +234,18 @@ app.delete('/deleteassistance/:assis_id', (req, res) => {
 
 app.delete('/deletecd/:cd_id', (req, res) => {
     deleteCd.deleteCd(req, res, db);
+})
+
+app.delete('/deleteDvd/:dvd_id', (req, res) => {
+    deleteDvd.deleteDvd(req, res, db);
+})
+
+app.delete('/deletePhoto/:photo_id', (req, res) => {
+    deletePhoto.deletePhoto(req,res, db);
+})
+
+app.delete('/deletePictures/:picture_id', (req, res) => {
+    deletePicture.deletePicture(req, res, db);
 })
 
 app.put('/updateEvent/:event_id', (req, res) => {
