@@ -172,6 +172,45 @@ app.put('/updateart/:art_id', upload.single('photo'), async (req, res) => {
     }
 })
 
+app.put('/updateCd/:cd_id', upload.single('photo'), async (req, res) => {
+    try{
+    
+   const {cd_id} = req.params;
+
+    const origin_cd = await db.select('*').from('cds').where({id: cd_id});
+
+    if(!origin_cd){
+        return res.status(400).status({err: `The ${cd_id} not exist`});
+    }
+
+    console.log(origin_cd);
+    
+    if(req.file){
+        var path = 'http://157.245.184.202/images/Cds/' + req.file.originalname
+    }else{
+        var path = origin_cd[0].path;
+    }
+
+    const {
+        title,
+        details,
+        contact,
+    } = req.body;
+
+    console.log("title,", title, details, contact);
+    console.log("path,", origin_cd[0].path);
+    
+    const updateData = await db('cds').update({
+        title: title,
+        path: path,
+        details: details,
+        contact: contact,
+    }).where({id: cd_id})
+    res.status(200).send({date: "Update Cd"})
+   }catch(error){
+       console.log(error.message);
+   }
+} )
 
 // app.post('/addabout', (req, res) => {
 //     addabout.newPost(req, res, db);
