@@ -248,6 +248,8 @@ app.delete('/deletePictures/:picture_id', (req, res) => {
     deletePicture.deletePicture(req, res, db);
 })
 
+
+
 app.put('/updateEvent/:event_id', (req, res) => {
     updateEvents.updateEvent(req, res, db);
 })
@@ -647,6 +649,17 @@ app.get('/getusername/', authorization, async (req, res) => {
         res.status(500).json('Server Error')
     }
 })
+
+app.get('/getCountCategory/', authorization, async (req, res) => {
+try{
+    const countCategory = await db.select('Category').count('Category as countCategory').from('eventlog').groupBy('Category');
+    res.status(200).json({countCategory});
+
+ }catch(error){
+    console.error(error.message);
+    res.status(500).json('Server Error')
+ }}
+)
 
 app.post('/create-checkout-session', async (req, res) => {
 
