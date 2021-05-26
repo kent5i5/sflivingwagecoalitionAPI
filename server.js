@@ -16,17 +16,24 @@ const jwt = require('jsonwebtoken');
 const validinfo = require('./middleware/validinfo');
 const authorization = require('./middleware/authorization');
 
-const addabout = require('./routes/post');
+const addEvent = require('./routes/post');
+const assistance = require('./routes/post');
 const updateEvents = require('./routes/update');
 const deleteEvents = require('./routes/delete');
 const register = require('./controllers/register');
 const signin = require('./controllers/signin');
 const deleteArt = require('./routes/delete');
 const deleteAssistance = require('./routes/delete');
+
 const deleteCd = require('./routes/delete');
 const deleteDvd = require('./routes/delete');
 const deletePhoto = require('./routes/delete');
 const deletePicture = require("./routes/delete");
+
+
+// This is a sample test API key. Sign in to see examples pre-filled with your key.
+const stripe = require("stripe")("sk_test_4eC39HqLyjWDarjtT1zdp7dc");
+
 
 dotenv.config();
 
@@ -97,6 +104,14 @@ app.post('/addart', upload.single('photo'), (req, res) => {
             res.status(200).json({ insterted: " DATA Inserted!" })
         })
         .catch(err => res.status(400).json('Unable to add new art work'))
+})
+
+app.post('/addEvent', (req, res) => {
+    addEvent.addEvent(req,res, db);
+})
+
+app.post('/assistance', (req, res) => {
+    assistance.assistance(req,res, db);
 })
 
 app.put('/updateCloseDate', async (req, res) => {
@@ -513,30 +528,7 @@ app.post('/register', validinfo, async (req, res,) => {
 })
 
 app.post('/signin', validinfo, signin.handleSignin(db, bcrypt))
-// app.post('/signin', validinfo, async (req, res) =>{
-//     const {email} = req.body;
-//     try{
-//         const status = await db.select('status').from('users').where({email: email});
 
-//         console.log("status,",status);
-
-//         if(status.length === 0){
-//             return res.status(400).json("The user is not exist!")
-//         }
-    
-//         if(status[0].status === "pending"){
-//             return res.status(400).json("Please verify your account in your email first!");
-//         }
-        
-//         signin.handleSignin(req, res, db, bcrypt);
-
-//    }catch(err){
-//        res.status(400).json("error!");
-//    }
-// }
-// )
-
-// app.post('/signin', validinfo, signin.handleSignin(db, bcrypt))
 
 app.get("/isverify", authorization, (req, res) => {
     try {
@@ -559,38 +551,7 @@ app.get('/dashboard', authorization, async (req, res) => {
     }
 })
 
-// app.get('/verifyEmail/:confirmationId', async (req, res) =>{
-//     const confirmationId = req.params.confirmationId;
-    
-//     console.log('verify,',confirmationId);
-    
-//     try{
-//         const userExist = await db.select('email').from('login').where({confirmationId: confirmationId});
 
-//         console.log('try,',userExist);
-
-//         if(userExist.length===0){
-//             return res.json({err: "The user is not exist!"});
-//         }
-       
-//         console.log("payload,", userExist[0].email);
-
-//         const updateStatus = await db('users').update({status: 'active'}).where({email: userExist[0].email});
-//         const deleteConfirmationId = await db('login').update({confirmationId: null}).where({email: userExist[0].email});
-        
-//         // const payload = {
-//         //     user: userExist[0].Id
-//         // }
-
-//         // console.log("payload,", payload);
-
-//         // const token = jwt.sign(payload, process.env.JWT_TOKEN, {expiresIn: 45 * 60});
-
-//         res.json({msg: "User verification sucess!"});
-//     }catch(err){
-//         return res.json({err: err.message});
-//     }
-// });
 
 app.post('/insertLog/', authorization, async (req, res) => {
     const { username, event, category } = req.body;
@@ -698,12 +659,24 @@ app.post('/create-checkout-session', async (req, res) => {
       success_url: `${YOUR_DOMAIN}?success=true`,
   
       cancel_url: `${YOUR_DOMAIN}?canceled=true`,
-  
-    });
+ });
   
     res.json({ id: session.id });
   
 });
+  
+app.post("/create-payment-intent", async (req, res) => {
+    const { items } = req.body;
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: calculateOrderAmount(items),
+      currency: "usd"
+    });
+  
+    res.send({
+      clientSecret: paymentIntent.client_secret
+    });
+  });
 
 app.listen(3001, () => {
     console.log('app is running at port 3001');
