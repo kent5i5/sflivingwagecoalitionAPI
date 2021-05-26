@@ -25,8 +25,15 @@ const signin = require('./controllers/signin');
 const deleteArt = require('./routes/delete');
 const deleteAssistance = require('./routes/delete');
 
+const deleteCd = require('./routes/delete');
+const deleteDvd = require('./routes/delete');
+const deletePhoto = require('./routes/delete');
+const deletePicture = require("./routes/delete");
+
+
 // This is a sample test API key. Sign in to see examples pre-filled with your key.
 const stripe = require("stripe")("sk_test_4eC39HqLyjWDarjtT1zdp7dc");
+
 
 dotenv.config();
 
@@ -34,14 +41,11 @@ dotenv.config();
 const db = knex({
     client: 'mysql',
     connection: {
-        // host: process.env.HOSTNAME,
-        // user: process.env.USERNAME,
-        // password: process.env.PASSWORD,
-        // database: process.env.DATABASE
-        host: "127.0.0.1" ,
-        user: "ken",
-        password: "kit123",
-        database: "phoneapp"
+        host: process.env.HOSTNAME,
+        user: process.env.USERNAME,
+        password: process.env.PASSWORD,
+        database: process.env.DATABASE
+
     }
 });
 
@@ -187,6 +191,45 @@ app.put('/updateart/:art_id', upload.single('photo'), async (req, res) => {
     }
 })
 
+app.put('/updateCd/:cd_id', upload.single('photo'), async (req, res) => {
+    try{
+    
+   const {cd_id} = req.params;
+
+    const origin_cd = await db.select('*').from('cds').where({id: cd_id});
+
+    if(!origin_cd){
+        return res.status(400).status({err: `The ${cd_id} not exist`});
+    }
+
+    console.log(origin_cd);
+    
+    if(req.file){
+        var path = 'http://157.245.184.202/images/Cds/' + req.file.originalname
+    }else{
+        var path = origin_cd[0].path;
+    }
+
+    const {
+        title,
+        details,
+        contact,
+    } = req.body;
+
+    console.log("title,", title, details, contact);
+    console.log("path,", origin_cd[0].path);
+    
+    const updateData = await db('cds').update({
+        title: title,
+        path: path,
+        details: details,
+        contact: contact,
+    }).where({id: cd_id})
+    res.status(200).send({date: "Update Cd"})
+   }catch(error){
+       console.log(error.message);
+   }
+} )
 
 // app.post('/addabout', (req, res) => {
 //     addabout.newPost(req, res, db);
@@ -203,6 +246,24 @@ app.delete('/deleteart/:art_id', (req, res) => {
 app.delete('/deleteassistance/:assis_id', (req, res) => {
     deleteAssistance.deleteAssistance(req, res, db)
 })
+
+app.delete('/deletecd/:cd_id', (req, res) => {
+    deleteCd.deleteCd(req, res, db);
+})
+
+app.delete('/deleteDvd/:dvd_id', (req, res) => {
+    deleteDvd.deleteDvd(req, res, db);
+})
+
+app.delete('/deletePhoto/:photo_id', (req, res) => {
+    deletePhoto.deletePhoto(req,res, db);
+})
+
+app.delete('/deletePictures/:picture_id', (req, res) => {
+    deletePicture.deletePicture(req, res, db);
+})
+
+
 
 app.put('/updateEvent/:event_id', (req, res) => {
     updateEvents.updateEvent(req, res, db);
@@ -467,30 +528,7 @@ app.post('/register', validinfo, async (req, res,) => {
 })
 
 app.post('/signin', validinfo, signin.handleSignin(db, bcrypt))
-// app.post('/signin', validinfo, async (req, res) =>{
-//     const {email} = req.body;
-//     try{
-//         const status = await db.select('status').from('users').where({email: email});
 
-//         console.log("status,",status);
-
-//         if(status.length === 0){
-//             return res.status(400).json("The user is not exist!")
-//         }
-    
-//         if(status[0].status === "pending"){
-//             return res.status(400).json("Please verify your account in your email first!");
-//         }
-        
-//         signin.handleSignin(req, res, db, bcrypt);
-
-//    }catch(err){
-//        res.status(400).json("error!");
-//    }
-// }
-// )
-
-// app.post('/signin', validinfo, signin.handleSignin(db, bcrypt))
 
 app.get("/isverify", authorization, (req, res) => {
     try {
@@ -513,45 +551,119 @@ app.get('/dashboard', authorization, async (req, res) => {
     }
 })
 
-// app.get('/verifyEmail/:confirmationId', async (req, res) =>{
-//     const confirmationId = req.params.confirmationId;
+
+
+app.post('/insertLog/', authorization, async (req, res) => {
+    const { username, event, category } = req.body;
+    const pstTime =new Date().toLocaleString("en-US", {timeZone: "America/Los_Angeles"});
+
+    console.log('pstTime,', pstTime);
+
+    db.insert(
+        {
+            username: username,
+            event: event,
+            createDate: pstTime,
+            Category: category
+
+        })
+        .into('eventlog')
+        .then(date=> {
+            res.status(200).json({msg: "Log event inserted!"})
+        })
+        .catch(err => res.status(400).json({err: 'Unable to add log event!'}))
+} );
+
+app.get('/getLog/:username', authorization, async (req, res) => {
     
-//     console.log('verify,',confirmationId);
+    const username = req.params.username;
+
+    const eventsInLog = await db.select('*').from('eventlog').where({username: username});
+
+    if(eventsInLog.length == 0){
+        return res.status(400).json({err: 'The username is not exist'});
+    }
+
+    res.status(200).json({eventsInLog});
+})
+
+
+app.get('/getAllLog', authorization, async (req, res) => {
     
-//     try{
-//         const userExist = await db.select('email').from('login').where({confirmationId: confirmationId});
+    const allLogs = await db.select('*').from('eventlog');
 
-//         console.log('try,',userExist);
+    if(allLogs){
+        return res.status(200).json({allLogs});
+    }else{
+        return res.status(400).json({err: 'Some errors happen when getting all infor in log'});
+    }
 
-//         if(userExist.length===0){
-//             return res.json({err: "The user is not exist!"});
-//         }
-       
-//         console.log("payload,", userExist[0].email);
+})
 
-//         const updateStatus = await db('users').update({status: 'active'}).where({email: userExist[0].email});
-//         const deleteConfirmationId = await db('login').update({confirmationId: null}).where({email: userExist[0].email});
-        
-//         // const payload = {
-//         //     user: userExist[0].Id
-//         // }
+app.get('/getusername/', authorization, async (req, res) => {
+    try {
+        console.log("getting username,", req.user);
+        const user = await db.select('email').from('users').where({ id: req.user })
+        res.status(200).json(user[0])
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json('Server Error')
+    }
+})
 
-//         // console.log("payload,", payload);
+app.get('/getCountCategory/', authorization, async (req, res) => {
+try{
+    const countCategory = await db.select('Category').count('Category as countCategory').from('eventlog').groupBy('Category');
+    res.status(200).json({countCategory});
 
-//         // const token = jwt.sign(payload, process.env.JWT_TOKEN, {expiresIn: 45 * 60});
+ }catch(error){
+    console.error(error.message);
+    res.status(500).json('Server Error')
+ }}
+)
 
-//         res.json({msg: "User verification sucess!"});
-//     }catch(err){
-//         return res.json({err: err.message});
-//     }
-// });
+app.post('/create-checkout-session', async (req, res) => {
 
-const calculateOrderAmount = items => {
-    // Replace this constant with a calculation of the order's amount
-    // Calculate the order total on the server to prevent
-    // people from directly manipulating the amount on the client
-    return 1;
-  };
+    const session = await stripe.checkout.sessions.create({
+  
+      payment_method_types: ['card'],
+  
+      line_items: [
+  
+        {
+  
+          price_data: {
+  
+            currency: 'usd',
+  
+            product_data: {
+  
+              name: 'Stubborn Attachments',
+  
+              images: ['https://i.imgur.com/EHyR2nP.png'],
+  
+            },
+  
+            unit_amount: 2000,
+  
+          },
+  
+          quantity: 1,
+  
+        },
+  
+      ],
+  
+      mode: 'payment',
+  
+      success_url: `${YOUR_DOMAIN}?success=true`,
+  
+      cancel_url: `${YOUR_DOMAIN}?canceled=true`,
+ });
+  
+    res.json({ id: session.id });
+  
+});
   
 app.post("/create-payment-intent", async (req, res) => {
     const { items } = req.body;

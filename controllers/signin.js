@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv')
+dotenv.config();
 const maxAge = 45 * 60;
+
 const createToken = (id) => {
     const payload = {
         user: id

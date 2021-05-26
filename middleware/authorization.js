@@ -3,13 +3,14 @@ const dotenv = require('dotenv')
 dotenv.config();
 
 // const secret = 'SECRET_SF'
-const secret = process.env.JWT_TOKEN;
+const secret = 'SECRET_SF';
 module.exports = async (req, res, next) => {
 
     const token = req.header("token");
 
     // Check if not token
     if (!token) {
+        console.log("no token");
         return res.status(403).json({ msg: "authorization denied" });
     }
 
@@ -17,7 +18,6 @@ module.exports = async (req, res, next) => {
     try {
         //it is going to give use the user id (user:{id: user.id})
         const verify = jwt.verify(token, secret);
-
         req.user = verify.user;
         next();
     } catch (err) {
